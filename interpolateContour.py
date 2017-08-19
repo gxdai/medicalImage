@@ -5,6 +5,20 @@ import os
 import pickle
 #import scipy.spatial.distance.pdist
 
+from numpy import linalg as LA
+
+import matplotlib.pyplot as plt
+
+def plotContour(curve1, curve2, curve3):
+    curve1 = [float(val) for val in curve1]
+    curve2 = [float(val) for val in curve2]
+    curve3 = [float(val) for val in curve3]
+
+    plt.plot(curve1[0::3], curve1[1::3], 'r*-')
+    plt.plot(curve2[0::3], curve2[1::3], 'g^-')
+    plt.plot(curve3[0::3], curve3[1::3], 'k.-')
+
+    plt.show()
 
 def getChangeIndex(diff):
 
@@ -51,10 +65,16 @@ def interpolateContour(dcmfile, annotation):
             print(CS.ContourSequence[change_index].ContourData[:3])
             print(CS.ContourSequence[change_index+1].ContourData[:3])
             print(sliceLocation)
+
             interpolatedLine = interpolateCoords(CS.ContourSequence[change_index].ContourData, \
                               CS.ContourSequence[change_index+1].ContourData, \
                               sliceLocation)
             contourInfo[label] = interpolatedLine
+            print(CS.ContourSequence[change_index].ContourData)
+            print(CS.ContourSequence[change_index+1].ContourData)
+            print(interpolatedLine)
+            plotContour(CS.ContourSequence[change_index].ContourData, CS.ContourSequence[change_index+1].ContourData, interpolatedLine)
+            sys.exit()
 
         elif (locationIndex[0].size > 1):
             contourInfo[label] = [CS.ContourSequence[locationIndex[0][index]].ContourData for index in range(locationIndex[0].size)]
@@ -70,7 +90,6 @@ def string2float(coordList):
 
 def interTwoPoints(point1, point2, zLocation):
     """
-
     :param point1:  1*3 array
     :param point2:  1*3 array
     :param zLocation:   float value
@@ -84,6 +103,16 @@ def interTwoPoints(point1, point2, zLocation):
 
     return  interpCoords
 
+
+def getDistMatrix(locationArray):
+
+    size = locationArray.shape[0]
+    distM = np.zeros((size, size))
+    for i in range(size):
+        for j in range(size):
+            distM[i, j] = LA.norm(locationArray[i] - locationArray[j])
+
+    return distM
 
 
 def interpolateCoords(coords1, coords2, zLocation):
@@ -101,6 +130,9 @@ def interpolateCoords(coords1, coords2, zLocation):
     coordAll = np.concatenate((coords1, coords2), axis=0)
     # distanceMatrix = pdist(coordAll, 'euclidean')
     distanceMatrix = np.zeros((coordAll.shape[0], coordAll.shape[0]))
+
+    distanceMatrix = getDistMatrix(coordAll)
+
     print(distanceMatrix.shape)
     subMatrix = distanceMatrix[:coords1.shape[0], coords1.shape[0]:]
     print(subMatrix.shape)
@@ -116,17 +148,12 @@ def interpolateCoords(coords1, coords2, zLocation):
     return contourList
 
 
-
-
-
-
-
-
 def batchInterPolation(inputRootDir, outputRootDir):
     sampleList = os.listdir(inputRootDir)
     counter = 0
 
-    stoppedFile = '/Users/GXDAI/Documents/medicalImage/Emory_Yang/HN 1-56/00007/CT1.2.840.113619.2.55.3.4137941444.252.1471027353.947.163.dcm'
+    stoppedFile = 'C:\Users\gdai\Downloads\HN 01-30\\00007\CT1.2.840.113619.2.55.3.4137941444.252.1471027353.947.163.dcm'
+    # stoppedFile = 'nonFile'
     for sample in sampleList:
         if '.DS_Store' == sample:
             continue
@@ -152,8 +179,12 @@ def batchInterPolation(inputRootDir, outputRootDir):
         for slide in slides:
             if counter % 100 == 0:
                 print(counter)
+                print("*****************************")
+            print(stoppedFile)
+            print(os.path.join(samplePath, slide))
             if stoppedFile != os.path.join(samplePath, slide):
                 continue
+            print("Interploate************")
             contourInfo = interpolateContour(os.path.join(samplePath, slide), annotation)
             outputfile = os.path.join(gtPath, slide.replace('.dcm', '.pkl'))
             with open(outputfile, 'wb') as f:
@@ -207,8 +238,8 @@ def batchInterPolation(inputRootDir, outputRootDir):
 
 if __name__ == "__main__":
 
-    inputRootDir = '/Users/GXDAI/Downloads/HN 31-56'
-    outputRootDir = '/Users/GXDAI/Downloads/tmp'
+    inputRootDir = 'C:\Users\gdai\Downloads\HN 01-30'
+    outputRootDir = 'C:\Users\gdai\Downloads\myGT'
     # inputRootDir = '/Users/GXDAI/Documents/medicalImage/Emory_Yang/HN 1-56'
     # outputRootDir = '/Users/GXDAI/Documents/medicalImage/Emory_Yang/GT'
     batchInterPolation(inputRootDir, outputRootDir)
