@@ -5,6 +5,7 @@ import os
 import pickle
 #import scipy.spatial.distance.pdist
 # Try GIT
+# Try GIT new branch
 from numpy import linalg as LA
 
 import matplotlib.pyplot as plt
