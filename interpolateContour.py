@@ -4,7 +4,7 @@ import numpy as np
 import os
 import pickle
 #import scipy.spatial.distance.pdist
-
+# Try GIT
 from numpy import linalg as LA
 
 import matplotlib.pyplot as plt
